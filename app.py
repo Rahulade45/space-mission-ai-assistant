@@ -1,179 +1,270 @@
-import streamlit as st
 import os
+import shutil
 from dotenv import load_dotenv
+import streamlit as st
 
 from utils.loader import load_documents
 from utils.embeddings import create_vectorstore, load_vectorstore
 from utils.chatbot import ask_question
-from utils.helper import welcome, footer
 
-# ----------------------------
-# Load API Key
-# ----------------------------
+
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not GROQ_API_KEY:
-    st.error("❌ GROQ_API_KEY not found in .env file")
-    st.stop()
-
-# ----------------------------
-# Page Configuration
-# ----------------------------
 st.set_page_config(
-    page_title="🚀 Space Mission AI Assistant",
+    page_title="Space Mission AI Assistant",
     page_icon="🚀",
     layout="wide"
 )
 
-# ----------------------------
-# Session State
-# ----------------------------
-if "messages" not in st.session_state:
-    st.session_state.messages = []
 
-# ----------------------------
-# Sidebar
-# ----------------------------
+# ============================================================
+# API KEY CHECK
+# ============================================================
+
+if not GROQ_API_KEY:
+    st.error(
+        "❌ GROQ_API_KEY not found.\n\n"
+        "Please create a .env file in the project folder and add:\n\n"
+        "GROQ_API_KEY=your_groq_api_key"
+    )
+    st.stop()
+
+
+# ============================================================
+# CUSTOM CSS
+# ============================================================
+
+st.markdown(
+    """
+    <style>
+
+    .main-title {
+        font-size: 42px;
+        font-weight: 700;
+    }
+
+    .subtitle {
+        font-size: 18px;
+        color: #666;
+    }
+
+    .success-box {
+        padding: 15px;
+        border-radius: 10px;
+        background-color: #e8f8ee;
+        border: 1px solid #b7e4c7;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
+# ============================================================
+# SIDEBAR
+# ============================================================
+
 with st.sidebar:
 
-    st.image("images/rocket.png", width=120)
+    st.image(
+        "images/rocket.png",
+        width=120
+    )
 
     st.title("Space Mission AI")
 
-    st.markdown("---")
+    st.divider()
 
     st.subheader("📚 Knowledge Base")
 
-    st.write("This chatbot can answer questions from:")
+    st.write(
+        "This chatbot can answer questions from:"
+    )
 
-    st.markdown("""
-✅ ISRO
+    st.write("✅ ISRO")
+    st.write("✅ NASA")
+    st.write("✅ Chandrayaan-3")
+    st.write("✅ Gaganyaan")
+    st.write("✅ Aditya-L1")
+    st.write("✅ Mars")
+    st.write("✅ Moon")
+    st.write("✅ Space Exploration")
 
-✅ NASA
+    st.divider()
 
-✅ Chandrayaan-3
+    st.subheader("🛠️ Technologies")
 
-✅ Gaganyaan
+    st.write("• Python")
+    st.write("• Streamlit")
+    st.write("• LangChain")
+    st.write("• FAISS")
+    st.write("• HuggingFace")
+    st.write("• Groq LLM")
 
-✅ Aditya-L1
-""")
+    st.divider()
 
-    st.markdown("---")
-
-    st.subheader("🛰 Technologies")
-
-    st.markdown("""
-- Python
-- Streamlit
-- LangChain
-- FAISS
-- HuggingFace
-- Groq LLM
-""")
-
-    st.markdown("---")
-
-    if st.button("🗑 Clear Chat"):
+    if st.button("🗑️ Clear Chat"):
         st.session_state.messages = []
         st.rerun()
 
-# ----------------------------
-# Main Page
-# ----------------------------
 
-st.title("🚀 Space Mission AI Assistant")
+# ============================================================
+# MAIN TITLE
+# ============================================================
 
-welcome()
-
-st.write(
-    """
-Ask questions about:
-
-- Chandrayaan Missions
-- Gaganyaan
-- ISRO
-- NASA
-- Aditya-L1
-- Mars
-- Moon
-- Space Exploration
-"""
+st.markdown(
+    '<div class="main-title">🚀 Space Mission AI Assistant</div>',
+    unsafe_allow_html=True
 )
 
-# ----------------------------
-# Load Vector Database
-# ----------------------------
+st.write(
+    "Generative AI-powered Space Mission Assistant using "
+    "Retrieval-Augmented Generation (RAG)."
+)
 
-vectorstore = load_vectorstore()
+st.success(
+    "🚀 Welcome Rahul! Ready to explore Space."
+)
 
-if vectorstore is None:
 
-    with st.spinner("Creating Knowledge Base..."):
+# ============================================================
+# INFORMATION
+# ============================================================
+
+st.subheader("Ask questions about:")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.write("🛰️ Chandrayaan Missions")
+    st.write("👨‍🚀 Gaganyaan")
+    st.write("🇮🇳 ISRO")
+
+with col2:
+    st.write("🌎 NASA")
+    st.write("☀️ Aditya-L1")
+    st.write("🔴 Mars")
+
+with col3:
+    st.write("🌙 Moon")
+    st.write("🚀 Space Exploration")
+    st.write("🛸 Space Technology")
+
+
+# ============================================================
+# VECTORSTORE FUNCTION
+# ============================================================
+
+def build_knowledge_base():
+
+    with st.spinner(
+        "🔄 Creating knowledge base from space documents..."
+    ):
 
         docs = load_documents("data")
 
+        if not docs:
+            st.error(
+                "❌ No PDF documents found in the data folder."
+            )
+            return None
+
         vectorstore = create_vectorstore(docs)
 
-# ----------------------------
-# Question Box
-# ----------------------------
+        return vectorstore
+
+
+# ============================================================
+# LOAD EXISTING VECTORSTORE
+# ============================================================
+
+vectorstore = load_vectorstore()
+
+
+# ============================================================
+# CREATE VECTORSTORE IF NOT AVAILABLE
+# ============================================================
+
+if vectorstore is None:
+
+    vectorstore = build_knowledge_base()
+
+    if vectorstore is None:
+        st.stop()
+
+
+# ============================================================
+# QUESTION SECTION
+# ============================================================
+
+st.divider()
+
+st.subheader("💬 Ask Your Space Question")
 
 question = st.text_input(
     "Ask your Space Question",
     placeholder="Example: Explain Chandrayaan-3 Mission"
 )
 
-if st.button("🚀 Ask"):
 
-    if question.strip() == "":
-        st.warning("Please enter a question.")
+# ============================================================
+# ANSWER QUESTION
+# ============================================================
 
-    else:
+if question:
 
-        answer = ask_question(
-            vectorstore,
-            question,
-            GROQ_API_KEY
-        )
+    with st.spinner("🤖 Searching the knowledge base..."):
 
-        st.session_state.messages.append(
-            {
-                "question": question,
-                "answer": answer
-            }
-        )
-        # ----------------------------
-# Chat History
-# ----------------------------
+        try:
 
-if len(st.session_state.messages) > 0:
+            answer = ask_question(
+                question,
+                vectorstore,
+                GROQ_API_KEY
+            )
 
-    st.markdown("---")
+            st.subheader("🤖 Answer")
 
-    st.header("💬 Conversation")
+            st.write(answer)
 
-    for chat in reversed(st.session_state.messages):
+        except Exception as e:
 
-        st.markdown(
-            f"""
-### 🙋 Question
+            error_message = str(e)
 
-{chat['question']}
+            if "401" in error_message or "Invalid API Key" in error_message:
 
-### 🤖 Answer
+                st.error(
+                    "❌ Invalid Groq API key.\n\n"
+                    "Please generate a new Groq API key and "
+                    "update your .env file."
+                )
 
-{chat['answer']}
+            else:
 
----
-"""
-        )
+                st.error(
+                    f"❌ Error while generating answer:\n\n{e}"
+                )
 
-footer()
-import os
+
+# ============================================================
+# PDF UPLOAD
+# ============================================================
+
+st.divider()
 
 st.subheader("📄 Upload Space PDF")
+
+st.write(
+    "Upload one or more space-related PDF documents. "
+    "The knowledge base will automatically rebuild."
+)
 
 uploaded_files = st.file_uploader(
     "Choose PDF files",
@@ -181,14 +272,101 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True
 )
 
+
+# ============================================================
+# HANDLE PDF UPLOAD
+# ============================================================
+
 if uploaded_files:
 
     os.makedirs("data", exist_ok=True)
 
-    for file in uploaded_files:
-        with open(os.path.join("data", file.name), "wb") as f:
-            f.write(file.getbuffer())
+    uploaded_any = False
 
-    st.success("✅ PDF uploaded successfully!")
+    for uploaded_file in uploaded_files:
 
-    st.info("Please restart the app or rebuild the vector database to include the new PDFs.")
+        file_path = os.path.join(
+            "data",
+            uploaded_file.name
+        )
+
+        try:
+
+            with open(file_path, "wb") as f:
+                f.write(
+                    uploaded_file.getbuffer()
+                )
+
+            uploaded_any = True
+
+        except Exception as e:
+
+            st.error(
+                f"❌ Could not save {uploaded_file.name}: {e}"
+            )
+
+
+    if uploaded_any:
+
+        st.success(
+            "✅ PDF uploaded successfully!"
+        )
+
+        # ----------------------------------------------------
+        # DELETE OLD VECTORSTORE
+        # ----------------------------------------------------
+
+        if os.path.exists("vectorstore"):
+
+            try:
+
+                shutil.rmtree("vectorstore")
+
+            except Exception as e:
+
+                st.error(
+                    f"❌ Could not remove old vectorstore: {e}"
+                )
+                st.stop()
+
+
+        # ----------------------------------------------------
+        # REBUILD VECTORSTORE
+        # ----------------------------------------------------
+
+        with st.spinner(
+            "🔄 Processing PDFs and rebuilding knowledge base..."
+        ):
+
+            try:
+
+                docs = load_documents("data")
+
+                vectorstore = create_vectorstore(docs)
+
+                st.success(
+                    "✅ Knowledge base rebuilt successfully!"
+                )
+
+                st.info(
+                    "🚀 Your newly uploaded PDF is now available "
+                    "for questions."
+                )
+
+            except Exception as e:
+
+                st.error(
+                    f"❌ Failed to rebuild knowledge base:\n\n{e}"
+                )
+
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.divider()
+
+st.caption(
+    "🚀 Space Mission AI Assistant | "
+    "Powered by LangChain + FAISS + HuggingFace + Groq"
+)
