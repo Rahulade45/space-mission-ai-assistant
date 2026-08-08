@@ -76,65 +76,51 @@ The system follows a Retrieval-Augmented Generation pipeline:
 
 
 
-\## 🏗️ System Architecture
-
-
+## 🏗️ System Architecture
 
 ```text
-
-Space Mission Documents
-
-&#x20;         │
-
-&#x20;         ▼
-
-&#x20;    PDF Document Loader
-
-&#x20;         │
-
-&#x20;         ▼
-
-&#x20;     Text Processing
-
-&#x20;         │
-
-&#x20;         ▼
-
-&#x20;  Text Chunking / Cleaning
-
-&#x20;         │
-
-&#x20;         ▼
-
-&#x20;  HuggingFace Embeddings
-
-&#x20;         │
-
-&#x20;         ▼
-
-&#x20;    Vector Retrieval
-
-&#x20;         │
-
-&#x20;         ▼
-
-&#x20;  Relevant Context
-
-&#x20;         │
-
-&#x20;         ▼
-
-&#x20;   LLaMA / Groq LLM
-
-&#x20;         │
-
-&#x20;         ▼
-
-&#x20;  Generated Response
-
-&#x20;         │
-
-&#x20;         ▼
-
-&#x20;  Streamlit Web Interface
-
+┌──────────────────────────────┐
+│   Space Mission Documents    │
+│        (PDF Knowledge Base)  │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│      PDF Document Loader     │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│   Text Processing & Chunking │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│  HuggingFace Embeddings      │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│     Vector Retrieval         │
+│    (Semantic Similarity)     │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│     Relevant Context         │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│      LLaMA / Groq LLM        │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│    Generated AI Response     │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│    Streamlit Web Interface   │
+└──────────────────────────────┘
