@@ -4,6 +4,10 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 import os
 
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+VECTORSTORE_PATH = os.path.join(BASE_DIR, "vectorstore")
+
+
 def create_vectorstore(documents):
 
     splitter = RecursiveCharacterTextSplitter(
@@ -22,22 +26,28 @@ def create_vectorstore(documents):
         embeddings
     )
 
-    vectorstore.save_local("vectorstore")
+    os.makedirs(VECTORSTORE_PATH, exist_ok=True)
+
+    vectorstore.save_local(VECTORSTORE_PATH)
 
     return vectorstore
 
 
 def load_vectorstore():
 
+    index_file = os.path.join(VECTORSTORE_PATH, "index.faiss")
+    pickle_file = os.path.join(VECTORSTORE_PATH, "index.pkl")
+
+    # Vector database does not exist yet
+    if not os.path.isfile(index_file) or not os.path.isfile(pickle_file):
+        return None
+
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
-    if os.path.exists("vectorstore"):
-        return FAISS.load_local(
-            "vectorstore",
-            embeddings,
-            allow_dangerous_deserialization=True
-        )
-
-    return None
+    return FAISS.load_local(
+        VECTORSTORE_PATH,
+        embeddings,
+        allow_dangerous_deserialization=True
+    )
